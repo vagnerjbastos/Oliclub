@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  nickname  String   @unique
+  pin       String
+  isAdmin   Boolean  @default(false)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  registrations Registration[]
+ rankings     Ranking[]
+}
+
+model Tournament {
+  id           String   @id @default(cuid())
+  name         String
+  date         DateTime
+  status       String   @default("upcoming")
+  buyInPrice   Float
+  rebuyPrice   Float
+  addonPrice   Float
+  buyInChips   Int
+  rebuyChips   Int
+  addonChips   Int
+  bonusChips   Int      @default(0)
+  bonusTime    String?
+  clubFeePercent Float   @default(0)
+  prizeConfig  String   // JSON: [{"position":1,"percentage":50},...]
+  pointConfig  String   // JSON: [{"position":1,"points":100},...]
+  maxPlayers   Int?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  registrations Registration[]
+  rankings     Ranking[]
+}
+
+model Registration {
+  id            String     @id @default(cuid())
+  playerId      String
+  tournamentId  String
+  status        String     @default("registered")
+  buyInPaid     Boolean    @default(false)
+  rebuyCount    Int        @default(0)
+  addonTaken    Boolean    @default(false)
+  bonusReceived Boolean    @default(false)
+  totalChips    Int        @default(0)
+  finalPosition Int?
+  prizeAmount   Float?
+  eliminatedAt  DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  player     Player     @relation(fields: [playerId], references: [id])
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+
+  @@unique([playerId, tournamentId])
+}
+
+model Ranking {
+  id           String   @id @default(cuid())
+  playerId     String
+  tournamentId String
+  position     Int
+  points       Int
+  createdAt    DateTime @default(now())
+
+  player     Player     @relation(fields: [playerId], references: [id])
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+
+  @@unique([playerId, tournamentId])
+}
